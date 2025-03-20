@@ -9,11 +9,25 @@
     "scripting",
     "tabs"
   ],
+  "commands": {
+    "take-screenshot": {
+      "suggested_key": {
+        "default": "Alt+Shift+S"
+      },
+      "description": "Save screenshot to computer"
+    },
+    "pin-screenshot": {
+      "suggested_key": {
+        "default": "Alt+Shift+P"
+      },
+      "description": "Pin screenshot to screen"
+    }
+  },
   "action": {
     "default_icon": {
-      "16": "icons/icon.webp",
-      "48": "icons/icon.webp",
-      "128": "icons/icon.webp"
+      "16": "icons/icon.png",
+      "48": "icons/icon.png",
+      "128": "icons/icon.png"
     },
     "default_popup": "popup.html"
   },
@@ -21,9 +35,9 @@
     "service_worker": "background.js"
   },
   "icons": {
-    "16": "icons/icon.webp",
-    "48": "icons/icon.webp",
-    "128": "icons/icon.webp"
+    "16": "icons/icon.png",
+    "48": "icons/icon.png",
+    "128": "icons/icon.png"
   },
   "web_accessible_resources": [{
     "resources": ["html2canvas.min.js"],
