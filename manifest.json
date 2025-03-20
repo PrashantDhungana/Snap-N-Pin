@@ -12,13 +12,13 @@
   "commands": {
     "take-screenshot": {
       "suggested_key": {
-        "default": "Alt+Shift+S"
+        "default": "Ctrl+Alt+1"
       },
       "description": "Save screenshot to computer"
     },
     "pin-screenshot": {
       "suggested_key": {
-        "default": "Alt+Shift+P"
+        "default": "Ctrl+Alt+2"
       },
       "description": "Pin screenshot to screen"
     }
