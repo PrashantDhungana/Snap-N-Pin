@@ -14,7 +14,8 @@
       "16": "icons/icon.webp",
       "48": "icons/icon.webp",
       "128": "icons/icon.webp"
-    }
+    },
+    "default_popup": "popup.html"
   },
   "background": {
     "service_worker": "background.js"

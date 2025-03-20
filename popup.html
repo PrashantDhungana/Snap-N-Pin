@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body {
+      width: 200px;
+      padding: 10px;
+      margin: 0;
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+    .menu-item {
+      display: flex;
+      align-items: center;
+      padding: 10px;
+      cursor: pointer;
+      border-radius: 4px;
+      transition: background-color 0.2s;
+    }
+    .menu-item:hover {
+      background-color: #f0f0f0;
+    }
+    .menu-item svg {
+      width: 20px;
+      height: 20px;
+      margin-right: 10px;
+    }
+    .menu-item span {
+      font-size: 14px;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+  <div class="menu-item" id="saveToComputer">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/>
+      <polyline points="17 21 17 13 7 13 7 21"/>
+      <polyline points="7 3 7 8 15 8"/>
+    </svg>
+    <span>Save to Computer</span>
+  </div>
+  <div class="menu-item" id="pinToTop">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M12 2L19 9H15V21H9V9H5L12 2Z"/>
+    </svg>
+    <span>Pin to Top</span>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>

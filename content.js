@@ -1,16 +1,16 @@
 // Ensure we only have one instance of ScreenshotTool
 class ScreenshotTool {
-  constructor() {
+  constructor(mode = 'save') {
     this.overlay = null;
     this.selection = null;
     this.startX = 0;
     this.startY = 0;
     this.isSelecting = false;
     this.originalScreenshot = null;
+    this.mode = mode;
   }
 
   async init() {
-    // Capture the screenshot first
     try {
       const response = await chrome.runtime.sendMessage({ type: 'capture' });
       if (!response || !response.dataUrl) {
@@ -78,23 +78,24 @@ class ScreenshotTool {
     this.isSelecting = false;
 
     const rect = this.selection.getBoundingClientRect();
-    this.cropScreenshot(rect);
+    if (this.mode === 'save') {
+      this.saveScreenshot(rect);
+    } else if (this.mode === 'pin') {
+      this.pinScreenshot(rect);
+    }
   }
 
-  async cropScreenshot(rect) {
+  async saveScreenshot(rect) {
     try {
-      // Create an image from the original screenshot
       const img = new Image();
       img.src = this.originalScreenshot;
       await new Promise((resolve) => (img.onload = resolve));
 
-      // Create a canvas to crop the screenshot
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
       canvas.width = rect.width;
       canvas.height = rect.height;
 
-      // Draw the cropped region
       ctx.drawImage(
         img,
         rect.left,
@@ -107,7 +108,6 @@ class ScreenshotTool {
         rect.height
       );
 
-      // Convert to blob and download
       canvas.toBlob((blob) => {
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
         const url = URL.createObjectURL(blob);
@@ -119,6 +119,118 @@ class ScreenshotTool {
       }, 'image/png');
     } catch (error) {
       console.error('Screenshot capture failed:', error);
+    } finally {
+      this.cleanup();
+    }
+  }
+
+  async pinScreenshot(rect) {
+    try {
+      const img = new Image();
+      img.src = this.originalScreenshot;
+      await new Promise((resolve) => (img.onload = resolve));
+
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      canvas.width = rect.width;
+      canvas.height = rect.height;
+
+      ctx.drawImage(
+        img,
+        rect.left,
+        rect.top,
+        rect.width,
+        rect.height,
+        0,
+        0,
+        rect.width,
+        rect.height
+      );
+
+      // Create a draggable container for the pinned screenshot
+      const container = document.createElement('div');
+      container.className = 'snap-n-pin-floating';
+      container.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 2147483647;
+        background: white;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        border-radius: 8px;
+        padding: 8px;
+        cursor: move;
+        resize: both;
+        overflow: hidden;
+        min-width: 100px;
+        min-height: 100px;
+      `;
+
+      // Add controls
+      const controls = document.createElement('div');
+      controls.style.cssText = `
+        display: flex;
+        gap: 8px;
+        margin-bottom: 8px;
+        justify-content: flex-end;
+      `;
+
+      // Close button
+      const closeButton = document.createElement('button');
+      closeButton.innerHTML = '✕';
+      closeButton.style.cssText = `
+        border: none;
+        background: none;
+        cursor: pointer;
+        padding: 4px 8px;
+        border-radius: 4px;
+        color: #666;
+      `;
+      closeButton.addEventListener('click', () => container.remove());
+
+      // Add the screenshot
+      const pinnedImg = document.createElement('img');
+      pinnedImg.src = canvas.toDataURL('image/png');
+      pinnedImg.style.cssText = `
+        max-width: 100%;
+        height: auto;
+        display: block;
+      `;
+
+      controls.appendChild(closeButton);
+      container.appendChild(controls);
+      container.appendChild(pinnedImg);
+      document.body.appendChild(container);
+
+      // Make it draggable
+      let isDragging = false;
+      let currentX;
+      let currentY;
+      let initialX;
+      let initialY;
+
+      container.addEventListener('mousedown', (e) => {
+        if (e.target === closeButton) return;
+        isDragging = true;
+        initialX = e.clientX - container.offsetLeft;
+        initialY = e.clientY - container.offsetTop;
+      });
+
+      document.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        e.preventDefault();
+        currentX = e.clientX - initialX;
+        currentY = e.clientY - initialY;
+        container.style.left = `${currentX}px`;
+        container.style.top = `${currentY}px`;
+      });
+
+      document.addEventListener('mouseup', () => {
+        isDragging = false;
+      });
+
+    } catch (error) {
+      console.error('Screenshot pinning failed:', error);
     } finally {
       this.cleanup();
     }
@@ -141,7 +253,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (screenshotTool) {
       screenshotTool.cleanup();
     }
-    screenshotTool = new ScreenshotTool();
+    screenshotTool = new ScreenshotTool(request.mode);
     screenshotTool.init();
   }
 });
