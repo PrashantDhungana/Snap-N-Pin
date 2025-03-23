@@ -159,37 +159,68 @@ class ScreenshotTool {
 
       // Style container for the video
       const container = document.createElement('div');
+      const INITIAL_WIDTH = 200;  // minimum width
+      const INITIAL_HEIGHT = 150; // minimum height
+
       container.className = 'snap-n-pin-floating';
       container.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
+        position: absolute;
+        top: ${rect.bottom}px;
+        left: ${rect.right}px;
         z-index: 2147483647;
-        background: white;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        border-radius: 8px;
+        background: rgba(32, 33, 36, 0.7);
+        backdrop-filter: blur(10px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+        border-radius: 12px;
         padding: 8px;
         user-select: none;
+        width: ${INITIAL_WIDTH}px;
+        height: ${INITIAL_HEIGHT}px;
+        min-width: ${INITIAL_WIDTH}px;
+        min-height: ${INITIAL_HEIGHT}px;
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        display: flex;
+        flex-direction: column;
       `;
+
+      // Add boundary checking to ensure the container stays within viewport
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+
+      // Adjust position if container would overflow viewport
+      if (rect.right + INITIAL_WIDTH > viewportWidth) {
+        container.style.left = `${viewportWidth - INITIAL_WIDTH - 20}px`;
+      }
+
+      if (rect.bottom + INITIAL_HEIGHT > viewportHeight) {
+        container.style.top = `${viewportHeight - INITIAL_HEIGHT - 20}px`;
+      }
 
       // Add header with title and controls
       const header = document.createElement('div');
       header.style.cssText = `
         display: flex;
-        align-items: center;
         justify-content: space-between;
-        margin-bottom: 8px;
-        cursor: move;
+        align-items: center;
+        margin-bottom: 4px;
         padding: 4px;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.05);
+        flex-shrink: 0;
+        cursor: move;
+
       `;
 
       const title = document.createElement('div');
       title.textContent = 'Snip and Pin';
       title.style.cssText = `
-        font-family: system-ui, -apple-system, sans-serif;
+        color: #fff;
         font-size: 14px;
         font-weight: 500;
-        color: #333;
+        margin: 0;
+        padding: 4px 8px;
+
       `;
 
       const controls = document.createElement('div');
@@ -200,16 +231,28 @@ class ScreenshotTool {
 
       // Save button
       const saveButton = document.createElement('button');
-      saveButton.innerHTML = '💾';
+      saveButton.innerHTML = `
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+      `;
       saveButton.title = 'Save Screenshot';
       saveButton.style.cssText = `
         border: none;
-        background: none;
+        background: rgba(255, 255, 255, 0.08);
         cursor: pointer;
-        padding: 4px 8px;
-        border-radius: 4px;
-        color: #666;
+        padding: 6px;
+        border-radius: 6px;
+        color: #fff;
         font-size: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+        transition: background-color 0.2s ease;
       `;
       saveButton.addEventListener('click', () => {
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
@@ -221,16 +264,27 @@ class ScreenshotTool {
 
       // PiP button
       const pipButton = document.createElement('button');
-      pipButton.innerHTML = '📌';
+      pipButton.innerHTML = `
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="2" width="20" height="20" rx="2"/>
+          <rect x="12" y="12" width="8" height="8" rx="1"/>
+        </svg>
+      `;
       pipButton.title = 'Enter Picture-in-Picture';
       pipButton.style.cssText = `
         border: none;
-        background: none;
+        background: rgba(255, 255, 255, 0.08);
         cursor: pointer;
-        padding: 4px 8px;
-        border-radius: 4px;
-        color: #666;
+        padding: 6px;
+        border-radius: 6px;
+        color: #fff;
         font-size: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+        transition: background-color 0.2s ease;
       `;
       pipButton.addEventListener('click', async () => {
         try {
@@ -248,16 +302,27 @@ class ScreenshotTool {
 
       // Close button
       const closeButton = document.createElement('button');
-      closeButton.innerHTML = '✕';
+      closeButton.innerHTML = `
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      `;
       closeButton.title = 'Close';
       closeButton.style.cssText = `
         border: none;
-        background: none;
+        background: rgba(255, 255, 255, 0.08);
         cursor: pointer;
-        padding: 4px 8px;
-        border-radius: 4px;
-        color: #666;
+        padding: 6px;
+        border-radius: 6px;
+        color: #fff;
         font-size: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+        transition: background-color 0.2s ease;
       `;
       closeButton.addEventListener('click', () => {
         if (document.pictureInPictureElement === video) {
@@ -268,19 +333,104 @@ class ScreenshotTool {
 
       // Add the screenshot as video
       video.style.cssText = `
-        max-width: 100%;
-        height: auto;
+        width: 100%;
+        height: calc(100% - 44px);
         display: block;
         pointer-events: none;
+        object-fit: contain;
+        background: transparent;
+        margin: 0;
+        padding: 0;
       `;
 
+      // Add resize handle
+      const resizeHandle = document.createElement('div');
+      resizeHandle.style.cssText = `
+        position: absolute;
+        right: 2px;
+        bottom: 2px;
+        width: 16px;
+        height: 16px;
+        cursor: se-resize;
+        opacity: 0.7;
+        transition: opacity 0.2s ease;
+      `;
+
+      // Create resize handle icon using SVG
+      resizeHandle.innerHTML = `
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="rgba(255, 255, 255, 0.5)">
+          <path d="M14,14 L14,11 L11,14 L14,14 Z M14,8 L8,14 L14,14 L14,8 Z"/>
+        </svg>
+      `;
+
+      // Add hover effect for resize handle
+      resizeHandle.addEventListener('mouseover', () => {
+        resizeHandle.style.opacity = '1';
+      });
+      resizeHandle.addEventListener('mouseout', () => {
+        resizeHandle.style.opacity = '0.7';
+      });
+
+      // Update button styles with increased transparency
+      const buttonStyles = `
+        border: none;
+        background: rgba(255, 255, 255, 0.08);
+        cursor: pointer;
+        padding: 6px;
+        border-radius: 6px;
+        color: #fff;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+        transition: background-color 0.2s ease;
+      `;
+
+      // Create retake button
+      const retakeButton = document.createElement('button');
+      retakeButton.style.cssText = buttonStyles;
+      retakeButton.title = 'Retake Screenshot';
+      retakeButton.innerHTML = `
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+          <path d="M12 8v8"/>
+          <path d="M8 12l4 4 4-4"/>
+        </svg>
+      `;
+      retakeButton.addEventListener('click', () => {
+        // Remove current screenshot window
+        container.remove();
+        if (document.pictureInPictureElement === video) {
+          document.exitPictureInPicture();
+        }
+        // Start new screenshot
+        chrome.runtime.sendMessage({ type: 'initScreenshot', mode: this.mode });
+      });
+
+      // Add hover effects for all buttons including retake
+      [saveButton, pipButton, closeButton, retakeButton].forEach(button => {
+        button.addEventListener('mouseover', () => {
+          button.style.background = 'rgba(255, 255, 255, 0.2)';
+        });
+        button.addEventListener('mouseout', () => {
+          button.style.background = 'rgba(255, 255, 255, 0.08)';
+        });
+      });
+
+      // Update controls order
+      controls.innerHTML = ''; // Clear existing controls
+      controls.appendChild(retakeButton);
       controls.appendChild(saveButton);
       controls.appendChild(pipButton);
       controls.appendChild(closeButton);
+
       header.appendChild(title);
       header.appendChild(controls);
       container.appendChild(header);
       container.appendChild(video);
+      container.appendChild(resizeHandle);
       document.body.appendChild(container);
 
       // Start playing the video (required for PiP)
@@ -324,6 +474,56 @@ class ScreenshotTool {
         // Clean up
         window._pipVideo = null;
         video.remove();
+      });
+
+      // Resize functionality
+      let isResizing = false;
+      let originalWidth;
+      let originalHeight;
+      let originalMouseX;
+      let originalMouseY;
+
+      resizeHandle.addEventListener('mousedown', (e) => {
+        isResizing = true;
+        originalWidth = container.offsetWidth;
+        originalHeight = container.offsetHeight;
+        originalMouseX = e.clientX;
+        originalMouseY = e.clientY;
+        e.stopPropagation();
+      });
+
+      document.addEventListener('mousemove', (e) => {
+        if (!isResizing) return;
+        e.preventDefault();
+
+        const width = originalWidth + (e.clientX - originalMouseX);
+        const height = originalHeight + (e.clientY - originalMouseY);
+
+        // Set minimum size
+        if (width >= 200 && height >= 150) {
+          container.style.width = `${width}px`;
+          container.style.height = `${height}px`;
+          video.style.width = '100%';
+          video.style.height = `${height - 40}px`; // Subtract header height
+        }
+      });
+
+      document.addEventListener('mouseup', () => {
+        isResizing = false;
+      });
+
+      // Add double-click handler to header
+      header.addEventListener('dblclick', (e) => {
+        // Prevent double-click from triggering other events
+        e.stopPropagation();
+        
+        // Reset container dimensions to initial size
+        container.style.width = `${INITIAL_WIDTH}px`;
+        container.style.height = `${INITIAL_HEIGHT}px`;
+        
+        // Reset video dimensions
+        video.style.width = '100%';
+        video.style.height = `${INITIAL_HEIGHT - 44}px`; // Subtract header height
       });
 
     } catch (error) {
