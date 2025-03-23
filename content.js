@@ -147,7 +147,17 @@ class ScreenshotTool {
         rect.height
       );
 
-      // Create a draggable container for the pinned screenshot
+      // Create a video element for PiP
+      const video = document.createElement('video');
+      video.autoplay = true;
+      video.muted = true;
+      video.loop = true;
+      
+      // Create a media stream from the canvas
+      const stream = canvas.captureStream();
+      video.srcObject = stream;
+
+      // Style container for the video
       const container = document.createElement('div');
       container.className = 'snap-n-pin-floating';
       container.style.cssText = `
@@ -209,6 +219,33 @@ class ScreenshotTool {
         a.click();
       });
 
+      // PiP button
+      const pipButton = document.createElement('button');
+      pipButton.innerHTML = '📌';
+      pipButton.title = 'Enter Picture-in-Picture';
+      pipButton.style.cssText = `
+        border: none;
+        background: none;
+        cursor: pointer;
+        padding: 4px 8px;
+        border-radius: 4px;
+        color: #666;
+        font-size: 14px;
+      `;
+      pipButton.addEventListener('click', async () => {
+        try {
+          if (document.pictureInPictureElement) {
+            await document.exitPictureInPicture();
+          } else {
+            await video.requestPictureInPicture();
+            // Remove the container once in PiP mode
+            container.remove();
+          }
+        } catch (error) {
+          console.error('Failed to enter Picture-in-Picture mode:', error);
+        }
+      });
+
       // Close button
       const closeButton = document.createElement('button');
       closeButton.innerHTML = '✕';
@@ -222,25 +259,15 @@ class ScreenshotTool {
         color: #666;
         font-size: 14px;
       `;
-      closeButton.addEventListener('click', () => container.remove());
+      closeButton.addEventListener('click', () => {
+        if (document.pictureInPictureElement === video) {
+          document.exitPictureInPicture();
+        }
+        container.remove();
+      });
 
-      // Resize handle
-      const resizeHandle = document.createElement('div');
-      resizeHandle.style.cssText = `
-        position: absolute;
-        bottom: 0;
-        right: 0;
-        width: 15px;
-        height: 15px;
-        cursor: se-resize;
-        background: linear-gradient(135deg, transparent 50%, #666 50%);
-        border-radius: 0 0 8px 0;
-      `;
-
-      // Add the screenshot
-      const pinnedImg = document.createElement('img');
-      pinnedImg.src = canvas.toDataURL('image/png');
-      pinnedImg.style.cssText = `
+      // Add the screenshot as video
+      video.style.cssText = `
         max-width: 100%;
         height: auto;
         display: block;
@@ -248,23 +275,23 @@ class ScreenshotTool {
       `;
 
       controls.appendChild(saveButton);
+      controls.appendChild(pipButton);
       controls.appendChild(closeButton);
       header.appendChild(title);
       header.appendChild(controls);
       container.appendChild(header);
-      container.appendChild(pinnedImg);
-      container.appendChild(resizeHandle);
+      container.appendChild(video);
       document.body.appendChild(container);
+
+      // Start playing the video (required for PiP)
+      video.play();
 
       // Make it draggable
       let isDragging = false;
-      let isResizing = false;
       let currentX;
       let currentY;
       let initialX;
       let initialY;
-      let initialWidth;
-      let initialHeight;
 
       header.addEventListener('mousedown', (e) => {
         if (e.target.tagName === 'BUTTON') return;
@@ -273,34 +300,30 @@ class ScreenshotTool {
         initialY = e.clientY - container.offsetTop;
       });
 
-      resizeHandle.addEventListener('mousedown', (e) => {
-        isResizing = true;
-        initialX = e.clientX;
-        initialY = e.clientY;
-        initialWidth = container.offsetWidth;
-        initialHeight = container.offsetHeight;
-        e.stopPropagation();
-      });
-
       document.addEventListener('mousemove', (e) => {
-        if (isDragging) {
-          e.preventDefault();
-          currentX = e.clientX - initialX;
-          currentY = e.clientY - initialY;
-          container.style.left = `${currentX}px`;
-          container.style.top = `${currentY}px`;
-        } else if (isResizing) {
-          e.preventDefault();
-          const width = initialWidth + (e.clientX - initialX);
-          const height = initialHeight + (e.clientY - initialY);
-          container.style.width = `${Math.max(200, width)}px`;
-          container.style.height = `${Math.max(100, height)}px`;
-        }
+        if (!isDragging) return;
+        e.preventDefault();
+        currentX = e.clientX - initialX;
+        currentY = e.clientY - initialY;
+        container.style.left = `${currentX}px`;
+        container.style.top = `${currentY}px`;
       });
 
       document.addEventListener('mouseup', () => {
         isDragging = false;
-        isResizing = false;
+      });
+
+      // Listen for PiP events
+      video.addEventListener('enterpictureinpicture', (event) => {
+        const pipWindow = event.pictureInPictureWindow;
+        // Store the video element in a global variable to prevent garbage collection
+        window._pipVideo = video;
+      });
+
+      video.addEventListener('leavepictureinpicture', () => {
+        // Clean up
+        window._pipVideo = null;
+        video.remove();
       });
 
     } catch (error) {

@@ -1,6 +1,6 @@
 # Snap N Pin - Chrome Screenshot Extension
 
-A powerful screenshot tool for Chrome that lets you capture, save, and pin screenshots to your screen. Similar to Windows' Snipping Tool but with additional features like the ability to keep screenshots floating on top of your browser.
+A powerful screenshot tool for Chrome that lets you capture, save, and pin screenshots to your screen. Similar to Windows' Snipping Tool but with additional features like the ability to keep screenshots floating on top of your browser using Picture-in-Picture mode.
 
 ## Features
 
@@ -13,24 +13,25 @@ A powerful screenshot tool for Chrome that lets you capture, save, and pin scree
 ### 2. Save to Computer
 - Instantly save screenshots as PNG files
 - Automatic timestamp-based filenames
-- Keyboard shortcut: `Ctrl + Alt + 1`
+- Keyboard shortcut: `Alt + Shift + 1`
 - Access via extension popup menu
 
 ### 3. Pin to Top
 - Float screenshots on top of your browser
+- Picture-in-Picture mode for cross-tab visibility
 - Drag screenshots anywhere on screen
-- Resize from the bottom-right corner
 - Save pinned screenshots anytime
 - Close when no longer needed
-- Keyboard shortcut: `Ctrl + Alt + 2`
+- Keyboard shortcut: `Alt + Shift + 2`
 - Access via extension popup menu
 
 ### 4. Floating Window Features
 - Title bar shows "Snip and Pin"
 - Drag by grabbing the title bar
-- Resize using the bottom-right corner handle
+- Picture-in-Picture toggle (📌)
 - Save button (💾) to download the screenshot
 - Close button (✕) to remove the window
+- PiP window stays visible across all tabs
 
 ## Installation
 
@@ -42,8 +43,8 @@ A powerful screenshot tool for Chrome that lets you capture, save, and pin scree
 ## Keyboard Shortcuts
 
 Default shortcuts:
-- `Ctrl + Alt + 1`: Save screenshot to computer
-- `Ctrl + Alt + 2`: Pin screenshot to screen
+- `Alt + Shift + 1`: Save screenshot to computer
+- `Alt + Shift + 2`: Pin screenshot to screen
 - `Esc`: Cancel screenshot selection
 
 To customize shortcuts:
@@ -63,9 +64,9 @@ To customize shortcuts:
 
 ### Managing Pinned Screenshots
 - **Move**: Drag the title bar
-- **Resize**: Drag the bottom-right corner
+- **Pin Across Tabs**: Click the 📌 button to toggle Picture-in-Picture mode
 - **Save**: Click the 💾 button
-- **Close**: Click the ✕ button
+- **Close**: Click the ✕ button or exit PiP mode
 
 ## Technical Details
 
@@ -77,6 +78,7 @@ Built with:
   - downloads
   - scripting
   - tabs
+- Picture-in-Picture API for cross-tab visibility
 
 ## Development
 

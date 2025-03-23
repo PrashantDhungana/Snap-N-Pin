@@ -2,23 +2,26 @@
   "manifest_version": 3,
   "name": "Snap N Pin",
   "version": "1.0",
-  "description": "A screenshot tool similar to Windows' Snipping Tool",
+  "description": "Capture, save, and pin screenshots with ease",
   "permissions": [
     "activeTab",
     "downloads",
     "scripting",
     "tabs"
   ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
   "commands": {
     "take-screenshot": {
       "suggested_key": {
-        "default": "Ctrl+Alt+1"
+        "default": "Alt+Shift+1"
       },
       "description": "Save screenshot to computer"
     },
     "pin-screenshot": {
       "suggested_key": {
-        "default": "Ctrl+Alt+2"
+        "default": "Alt+Shift+2"
       },
       "description": "Pin screenshot to screen"
     }
