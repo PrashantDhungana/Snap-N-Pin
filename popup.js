@@ -43,3 +43,23 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 });
+
+document.addEventListener('mousemove', (e) => {
+  if (!isDragging) return;
+  e.preventDefault();
+  
+  // Calculate new position
+  currentX = e.clientX - initialX;
+  currentY = e.clientY - initialY;
+  
+  // Add bounds checking
+  const maxX = window.innerWidth - container.offsetWidth;
+  const maxY = window.innerHeight - container.offsetHeight;
+  
+  // Constrain to viewport
+  currentX = Math.max(0, Math.min(currentX, maxX));
+  currentY = Math.max(0, Math.min(currentY, maxY));
+  
+  container.style.left = `${currentX}px`;
+  container.style.top = `${currentY}px`;
+});
