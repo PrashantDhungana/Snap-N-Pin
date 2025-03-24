@@ -18,7 +18,13 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     });
     return true; // Required for async response
   } else if (request.type === 'initScreenshot') {
-    initiateScreenshot(request.mode);
+    if (request.mode === 'fullpage') {
+      captureFullPage();
+    } else {
+      initiateScreenshot(request.mode);
+      // Close popup immediately for non-fullpage captures
+      chrome.runtime.sendMessage({ type: 'captureComplete' });
+    }
   } else if (request.type === 'captureFullPage') {
     captureFullPage();
   }
@@ -101,6 +107,9 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
 async function captureFullPage() {
   try {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+
+    // Notify capture start
+    chrome.runtime.sendMessage({ type: 'captureStarted' });
 
     // Get page dimensions and handle fixed elements
     const pageInfo = await chrome.scripting.executeScript({
@@ -257,12 +266,13 @@ async function captureFullPage() {
       args: [captures, totalHeight, viewportHeight, viewportWidth]
     });
 
-    // Download the final stitched image
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    await chrome.downloads.download({
-      url: stitchResult[0].result,
-      filename: `fullpage-screenshot-${timestamp}.png`
+    // Open the screenshot in a new tab
+    chrome.tabs.create({
+      url: `viewer.html?image=${encodeURIComponent(stitchResult[0].result)}`
     });
+
+    // Notify capture complete
+    chrome.runtime.sendMessage({ type: 'captureComplete' });
 
     // Reset scroll position and restore elements and scrollbars
     await chrome.scripting.executeScript({
@@ -277,6 +287,12 @@ async function captureFullPage() {
 
   } catch (error) {
     console.error('Full page capture failed:', error);
+    // Notify capture failed
+    chrome.runtime.sendMessage({ 
+      type: 'captureComplete', 
+      error: 'Screenshot failed. Please try again.' 
+    });
+    
     // Ensure elements and scrollbars are restored even if there's an error
     await chrome.scripting.executeScript({
       target: { tabId: tab.id },

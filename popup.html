@@ -45,6 +45,32 @@
       stroke-linecap: round;
       stroke-linejoin: round;
     }
+    .loading-container {
+      padding: 16px;
+      text-align: center;
+      color: #fff;
+    }
+    .loading-text {
+      display: block;
+      margin-top: 12px;
+      font-size: 14px;
+    }
+    .loading-spinner {
+      display: inline-block;
+      width: 24px;
+      height: 24px;
+      border: 3px solid rgba(255,255,255,0.3);
+      border-radius: 50%;
+      border-top-color: #fff;
+      animation: spin 1s ease-in-out infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .menu-item.loading {
+      opacity: 0.5;
+      pointer-events: none;
+    }
   </style>
 </head>
 <body>
@@ -75,6 +101,12 @@
     </svg>
     <span>Full-page Screenshot</span>
     <span class="shortcut">Alt+Shift+3</span>
+  </div>
+  <div id="captureProgress" style="display: none;">
+    <div class="loading-container">
+      <div class="loading-spinner"></div>
+      <span class="loading-text">Screen capture in progress...</span>
+    </div>
   </div>
   <script src="popup.js"></script>
 </body>
