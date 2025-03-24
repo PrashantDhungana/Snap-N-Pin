@@ -4,6 +4,9 @@ A powerful screenshot tool for Chrome that lets you capture, save, and pin scree
 
 Created/Vibe Coded using Windsurf, ChatGPT(icons) and Cursor(additional features.
 
+More Details on how I created the extension:
+https://medium.com/@dhunganaprashant/how-i-vibe-coded-a-chrome-extension-without-writing-a-single-line-of-code-0e46dcdd76be
+
 ## Features
 
 ### 1. Screenshot Capture
