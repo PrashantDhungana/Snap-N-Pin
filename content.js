@@ -300,6 +300,56 @@ class ScreenshotTool {
         }
       });
 
+      // Copy button
+      const copyButton = document.createElement('button');
+      copyButton.innerHTML = `
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+        </svg>
+      `;
+      copyButton.title = 'Copy to Clipboard';
+      copyButton.style.cssText = `
+        border: none;
+        background: rgba(255, 255, 255, 0.08);
+        cursor: pointer;
+        padding: 6px;
+        border-radius: 6px;
+        color: #fff;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+        transition: background-color 0.2s ease;
+      `;
+
+      copyButton.addEventListener('click', async () => {
+        try {
+          const dataUrl = canvas.toDataURL('image/png');
+          const response = await fetch(dataUrl);
+          const blob = await response.blob();
+          
+          await navigator.clipboard.write([
+            new ClipboardItem({
+              'image/png': blob
+            })
+          ]);
+          
+          // Show success feedback
+          const originalColor = copyButton.style.background;
+          copyButton.style.background = 'rgba(75, 181, 67, 0.4)';
+          this.showToast('Copied to clipboard');
+          setTimeout(() => {
+            copyButton.style.background = originalColor;
+          }, 1000);
+        } catch (error) {
+          console.error('Failed to copy to clipboard:', error);
+          this.showToast('Failed to copy to clipboard');
+        }
+      });
+
       // Close button
       const closeButton = document.createElement('button');
       closeButton.innerHTML = `
@@ -410,7 +460,7 @@ class ScreenshotTool {
       });
 
       // Add hover effects for all buttons including retake
-      [saveButton, pipButton, closeButton, retakeButton].forEach(button => {
+      [saveButton, pipButton, closeButton, retakeButton, copyButton].forEach(button => {
         button.addEventListener('mouseover', () => {
           button.style.background = 'rgba(255, 255, 255, 0.2)';
         });
@@ -424,6 +474,7 @@ class ScreenshotTool {
       controls.appendChild(retakeButton);
       controls.appendChild(saveButton);
       controls.appendChild(pipButton);
+      controls.appendChild(copyButton);
       controls.appendChild(closeButton);
 
       header.appendChild(title);
@@ -540,6 +591,41 @@ class ScreenshotTool {
     }
     this.originalScreenshot = null;
     document.removeEventListener('keydown', this.handleKeyDown.bind(this));
+  }
+
+  showToast(message) {
+    const toast = document.createElement('div');
+    toast.textContent = message;
+    toast.style.cssText = `
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: rgba(0, 0, 0, 0.8);
+      color: white;
+      padding: 8px 16px;
+      border-radius: 4px;
+      z-index: 2147483647;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 14px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s ease-in-out;
+    `;
+    
+    document.body.appendChild(toast);
+    
+    // Trigger animation
+    requestAnimationFrame(() => {
+      toast.style.opacity = '1';
+      
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => {
+          document.body.removeChild(toast);
+        }, 200);
+      }, 2000);
+    });
   }
 }
 
