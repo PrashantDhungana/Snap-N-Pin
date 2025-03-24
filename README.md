@@ -2,6 +2,8 @@
 
 A powerful screenshot tool for Chrome that lets you capture, save, and pin screenshots to your screen. Similar to Windows' Snipping Tool but with additional features like the ability to keep screenshots floating on top of your browser using Picture-in-Picture mode.
 
+Created/Vibe Coded using Windsurf, ChatGPT(icons) and Cursor(additional features.
+
 ## Features
 
 ### 1. Screenshot Capture
