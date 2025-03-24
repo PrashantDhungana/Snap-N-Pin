@@ -159,16 +159,16 @@ class ScreenshotTool {
 
       // Style container for the video
       const container = document.createElement('div');
-      const INITIAL_WIDTH = 200;  // minimum width
-      const INITIAL_HEIGHT = 150; // minimum height
+      const INITIAL_WIDTH = 200;
+      const INITIAL_HEIGHT = 150;
 
       container.className = 'snap-n-pin-floating';
       container.style.cssText = `
-        position: absolute;
-        top: ${rect.bottom}px;
-        left: ${rect.right}px;
+        position: fixed;
+        top: ${Math.min(rect.bottom, window.innerHeight - INITIAL_HEIGHT - 20)}px;
+        left: ${Math.min(rect.right, window.innerWidth - INITIAL_WIDTH - 20)}px;
         z-index: 2147483647;
-        background: rgba(32, 33, 36, 0.7);
+        background: rgba(32, 33, 36, 0.9);
         backdrop-filter: blur(10px);
         box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
         border-radius: 12px;
@@ -184,18 +184,9 @@ class ScreenshotTool {
         flex-direction: column;
       `;
 
-      // Add boundary checking to ensure the container stays within viewport
-      const viewportWidth = window.innerWidth;
-      const viewportHeight = window.innerHeight;
-
-      // Adjust position if container would overflow viewport
-      if (rect.right + INITIAL_WIDTH > viewportWidth) {
-        container.style.left = `${viewportWidth - INITIAL_WIDTH - 20}px`;
-      }
-
-      if (rect.bottom + INITIAL_HEIGHT > viewportHeight) {
-        container.style.top = `${viewportHeight - INITIAL_HEIGHT - 20}px`;
-      }
+      // Add this to ensure the container stays on top of other elements
+      container.style.setProperty('position', 'fixed', 'important');
+      container.style.setProperty('z-index', '2147483647', 'important');
 
       // Add header with title and controls
       const header = document.createElement('div');
@@ -497,17 +488,28 @@ class ScreenshotTool {
       header.addEventListener('mousedown', (e) => {
         if (e.target.tagName === 'BUTTON') return;
         isDragging = true;
-        initialX = e.clientX - container.offsetLeft;
-        initialY = e.clientY - container.offsetTop;
+        initialX = e.clientX - container.getBoundingClientRect().left;
+        initialY = e.clientY - container.getBoundingClientRect().top;
       });
 
       document.addEventListener('mousemove', (e) => {
         if (!isDragging) return;
         e.preventDefault();
-        currentX = e.clientX - initialX;
-        currentY = e.clientY - initialY;
-        container.style.left = `${currentX}px`;
-        container.style.top = `${currentY}px`;
+        
+        // Calculate new position relative to viewport
+        let newX = e.clientX - initialX;
+        let newY = e.clientY - initialY;
+        
+        // Add bounds checking
+        const maxX = window.innerWidth - container.offsetWidth;
+        const maxY = window.innerHeight - container.offsetHeight;
+        
+        // Constrain to viewport
+        newX = Math.max(0, Math.min(newX, maxX));
+        newY = Math.max(0, Math.min(newY, maxY));
+        
+        container.style.left = `${newX}px`;
+        container.style.top = `${newY}px`;
       });
 
       document.addEventListener('mouseup', () => {
