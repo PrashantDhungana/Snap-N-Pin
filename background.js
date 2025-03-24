@@ -19,6 +19,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     return true; // Required for async response
   } else if (request.type === 'initScreenshot') {
     initiateScreenshot(request.mode);
+  } else if (request.type === 'captureFullPage') {
+    captureFullPage();
   }
 });
 
@@ -27,6 +29,11 @@ async function initiateScreenshot(mode) {
   try {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
     const tabId = tab.id;
+
+    if (mode === 'fullpage') {
+      await captureFullPage();
+      return;
+    }
 
     if (!injectedTabs.has(tabId)) {
       await chrome.scripting.insertCSS({
@@ -90,3 +97,194 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
     injectedTabs.delete(tabId);
   }
 });
+
+async function captureFullPage() {
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+
+    // Get page dimensions and handle fixed elements
+    const pageInfo = await chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      func: () => {
+        // Store original styles to restore later
+        const elementsToRestore = [];
+        
+        // Store original scrollbar state
+        const originalOverflow = document.documentElement.style.overflow;
+        const originalBodyOverflow = document.body.style.overflow;
+        
+        // Handle fixed/sticky elements and scrollbars
+        const hideFixedElementsAndScrollbars = () => {
+          // Hide scrollbars
+          document.documentElement.style.overflow = 'hidden';
+          document.body.style.overflow = 'hidden';
+
+          const elements = document.querySelectorAll('*');
+          elements.forEach(el => {
+            const style = window.getComputedStyle(el);
+            if (style.position === 'fixed' || style.position === 'sticky') {
+              elementsToRestore.push({
+                element: el,
+                originalPosition: el.style.position,
+                originalDisplay: el.style.display
+              });
+              el.style.position = 'absolute';
+              if (el.tagName === 'HEADER' || el.tagName === 'NAV' || 
+                  el.classList.contains('header') || el.classList.contains('nav')) {
+                el.style.display = 'none';
+              }
+            }
+          });
+        };
+
+        // Restore fixed elements and scrollbars
+        const restoreFixedElementsAndScrollbars = () => {
+          // Restore scrollbars
+          document.documentElement.style.overflow = originalOverflow;
+          document.body.style.overflow = originalBodyOverflow;
+
+          elementsToRestore.forEach(({ element, originalPosition, originalDisplay }) => {
+            element.style.position = originalPosition;
+            if (originalDisplay) {
+              element.style.display = originalDisplay;
+            }
+          });
+        };
+
+        window.snapNPinUtils = {
+          hideFixedElementsAndScrollbars,
+          restoreFixedElementsAndScrollbars,
+          elementsToRestore
+        };
+
+        return {
+          viewportHeight: window.innerHeight,
+          totalHeight: Math.max(
+            document.documentElement.scrollHeight,
+            document.body.scrollHeight
+          ),
+          viewportWidth: window.innerWidth,
+          totalWidth: Math.max(
+            document.documentElement.scrollWidth,
+            document.body.scrollWidth
+          )
+        };
+      }
+    });
+
+    const { viewportHeight, totalHeight, viewportWidth } = pageInfo[0].result;
+    const captures = [];
+    
+    // Hide fixed elements and scrollbars before starting capture
+    await chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      func: () => {
+        window.scrollTo(0, 0);
+        window.snapNPinUtils.hideFixedElementsAndScrollbars();
+        const canvas = document.createElement('canvas');
+        canvas.id = 'fullPageCanvas';
+        canvas.style.display = 'none';
+        document.body.appendChild(canvas);
+      }
+    });
+
+    const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+    // Calculate the number of full captures needed
+    const numberOfCaptures = Math.ceil(totalHeight / viewportHeight);
+    
+    // Modified capture loop
+    for (let i = 0; i < numberOfCaptures; i++) {
+      const currentScroll = i * viewportHeight;
+      
+      // For the last capture, adjust scroll position to capture the bottom perfectly
+      if (i === numberOfCaptures - 1) {
+        await chrome.scripting.executeScript({
+          target: { tabId: tab.id },
+          func: (totalHeight, viewportHeight) => {
+            window.scrollTo(0, totalHeight - viewportHeight);
+          },
+          args: [totalHeight, viewportHeight]
+        });
+      } else {
+        await chrome.scripting.executeScript({
+          target: { tabId: tab.id },
+          func: (scrollPos) => window.scrollTo(0, scrollPos),
+          args: [currentScroll]
+        });
+      }
+
+      await delay(300);
+
+      const dataUrl = await chrome.tabs.captureVisibleTab(null, {
+        format: 'png'
+      });
+      captures.push({
+        dataUrl,
+        scrollPos: i === numberOfCaptures - 1 ? totalHeight - viewportHeight : currentScroll
+      });
+
+      await delay(500);
+    }
+
+    // Updated stitching process
+    const stitchResult = await chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      func: async (captures, totalHeight, viewportHeight, viewportWidth) => {
+        const canvas = document.getElementById('fullPageCanvas');
+        canvas.width = viewportWidth;
+        canvas.height = totalHeight;
+        const ctx = canvas.getContext('2d');
+
+        return new Promise((resolve) => {
+          let loadedImages = 0;
+          captures.forEach(({ dataUrl, scrollPos }) => {
+            const img = new Image();
+            img.onload = () => {
+              ctx.drawImage(img, 0, scrollPos);
+              loadedImages++;
+              if (loadedImages === captures.length) {
+                const finalDataUrl = canvas.toDataURL('image/png');
+                canvas.remove();
+                window.snapNPinUtils.restoreFixedElementsAndScrollbars();
+                resolve(finalDataUrl);
+              }
+            };
+            img.src = dataUrl;
+          });
+        });
+      },
+      args: [captures, totalHeight, viewportHeight, viewportWidth]
+    });
+
+    // Download the final stitched image
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    await chrome.downloads.download({
+      url: stitchResult[0].result,
+      filename: `fullpage-screenshot-${timestamp}.png`
+    });
+
+    // Reset scroll position and restore elements and scrollbars
+    await chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      func: () => {
+        window.scrollTo(0, 0);
+        if (window.snapNPinUtils && window.snapNPinUtils.restoreFixedElementsAndScrollbars) {
+          window.snapNPinUtils.restoreFixedElementsAndScrollbars();
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error('Full page capture failed:', error);
+    // Ensure elements and scrollbars are restored even if there's an error
+    await chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      func: () => {
+        if (window.snapNPinUtils && window.snapNPinUtils.restoreFixedElementsAndScrollbars) {
+          window.snapNPinUtils.restoreFixedElementsAndScrollbars();
+        }
+      }
+    });
+  }
+}

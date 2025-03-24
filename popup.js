@@ -10,4 +10,10 @@ document.addEventListener('DOMContentLoaded', () => {
     chrome.runtime.sendMessage({ type: 'initScreenshot', mode: 'pin' });
     window.close(); // Close popup after selection
   });
+
+  // Updated fullpage screenshot listener
+  document.getElementById('fullPageScreenshot').addEventListener('click', async () => {
+    chrome.runtime.sendMessage({ type: 'captureFullPage' });
+    window.close();
+  });
 });
