@@ -25,13 +25,24 @@ A powerful screenshot tool for Chrome that lets you capture, save, and pin scree
 - Keyboard shortcut: `Alt + Shift + 2`
 - Access via extension popup menu
 
-### 4. Floating Window Features
+### 4. Full-page Screenshot
+- Capture entire webpage content
+- Smart handling of fixed/sticky elements
+- Automatic scrolling and stitching
+- Export options: PNG, JPG
+- Keyboard shortcut: `Alt + Shift + 3`
+- Access via extension popup menu
+
+### 5. Floating Window Features
 - Title bar shows "Snip and Pin"
 - Drag by grabbing the title bar
 - Picture-in-Picture toggle (📌)
 - Save button (💾) to download the screenshot
+- Copy button (📋) to copy to clipboard
 - Close button (✕) to remove the window
 - PiP window stays visible across all tabs
+- Resize handle for custom dimensions
+- Double-click title bar to reset size
 
 ## Installation
 
@@ -45,6 +56,7 @@ A powerful screenshot tool for Chrome that lets you capture, save, and pin scree
 Default shortcuts:
 - `Alt + Shift + 1`: Save screenshot to computer
 - `Alt + Shift + 2`: Pin screenshot to screen
+- `Alt + Shift + 3`: Full-page screenshot
 - `Esc`: Cancel screenshot selection
 
 To customize shortcuts:
@@ -62,10 +74,19 @@ To customize shortcuts:
 3. Click and drag to select the area
 4. Release to capture
 
+### Taking a Full-page Screenshot
+1. Click the extension icon
+2. Choose "Full-page Screenshot"
+3. Wait for the capture process to complete
+4. Use the export options to save in your preferred format
+
 ### Managing Pinned Screenshots
 - **Move**: Drag the title bar
-- **Pin Across Tabs**: Click the 📌 button to toggle Picture-in-Picture mode
+- **Resize**: Drag the bottom-right corner
+- **Reset Size**: Double-click the title bar
+- **Pin Across Tabs**: Click the 📌 button
 - **Save**: Click the 💾 button
+- **Copy**: Click the 📋 button
 - **Close**: Click the ✕ button or exit PiP mode
 
 ## Technical Details
@@ -79,20 +100,24 @@ Built with:
   - scripting
   - tabs
 - Picture-in-Picture API for cross-tab visibility
+- Canvas API for screenshot manipulation
 
 ## Development
 
 ### Project Structure
-```
 snap-n-pin/
-├── manifest.json        # Extension configuration
-├── background.js       # Background service worker
-├── content.js         # Content script for screenshot functionality
-├── popup.html         # Extension popup menu
-├── popup.js          # Popup functionality
-├── icons/            # Extension icons
-└── README.md         # Documentation
-```
+├── manifest.json # Extension configuration
+├── background.js # Background service worker
+├── content.js # Content script for screenshot functionality
+├── popup.html # Extension popup menu
+├── popup.js # Popup functionality
+├── fullpage.js # Full-page screenshot logic
+├── viewer.html # Screenshot viewer interface
+├── viewer.js # Viewer functionality
+├── inject.js # HTML2Canvas injection
+├── icons/ # Extension icons
+└── README.md # Documentation
+
 
 ### Building from Source
 1. Clone the repository
@@ -102,4 +127,3 @@ snap-n-pin/
 ## Contributing
 
 Feel free to submit issues and enhancement requests!
-
